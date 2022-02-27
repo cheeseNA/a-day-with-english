@@ -1,0 +1,16 @@
+{
+  "name": "A Day with English",
+  "description": "measure how much time you spend with English",
+  "version": "1.0",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html"
+}
