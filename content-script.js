@@ -12,5 +12,6 @@ chrome.runtime.sendMessage(
 );
 
 function getLanguageOfPage() {
-  return "en";
+  const languageTag = document.documentElement.lang; // this value follows the BCP47 syntax
+  return languageTag.split("-")[0];
 }

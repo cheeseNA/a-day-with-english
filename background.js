@@ -10,7 +10,8 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
       targetTabId,
       { type: "requestLang" },
       (response) => {
-        console.log(response);
+        console.log("received requestLang response");
+        console.log(`lang: ${response.lang}`);
         setTimerStatus(response.lang);
       }
     );
@@ -19,7 +20,8 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type == "pageTransition") {
-    console.log("received pageTransition message:");
+    console.log("received pageTransition message");
+    console.log(`lang: ${request.lang}`);
     if (sender.tab.active) {
       setTimerStatus(request.lang);
     }
