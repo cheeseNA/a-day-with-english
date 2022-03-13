@@ -44,20 +44,28 @@ function setTimerStatus(lang) {
     console.log(`timer status: ${timerStatus}`);
     if (lang === "en" && timerStatus === "not set") {
       console.log("start timer");
+      chrome.action.setBadgeBackgroundColor({ color: [0, 0, 255, 0] });
       const intervalId = setInterval(() => {
         chrome.storage.sync.get(["count"], function (countResult) {
           const nowCount = countResult.count;
           console.log(`now count is ${nowCount}`);
           chrome.storage.sync.set({ count: nowCount + 1 });
-          chrome.action.setBadgeText({ text: nowCount.toString() });
+          chrome.action.setBadgeText({ text: countToTimestampText(nowCount) });
         });
       }, 1000);
       chrome.storage.sync.set({ timerStatus: intervalId });
     }
     if (lang !== "en" && timerStatus !== "not set") {
       console.log("stop timer");
+      chrome.action.setBadgeBackgroundColor({ color: "gray" });
       clearInterval(timerStatus);
       chrome.storage.sync.set({ timerStatus: "not set" });
     }
   });
+}
+
+function countToTimestampText(count) {
+  const minute = Math.floor(count / 60);
+  const hour = Math.floor(minute / 60);
+  return `${hour}:${minute}`;
 }
