@@ -7,7 +7,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-
 chrome.windows.onFocusChanged.addListener((windowId) => {
   console.log("onFocusChanged fired");
   if (windowId === chrome.windows.WINDOW_ID_NONE) {
@@ -24,6 +23,10 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
         targetTabId,
         { type: "requestLang" },
         (response) => {
+          if (response === chrome.runtime.lastError || !response) {
+            console.log(response);
+            return;
+          }
           console.log("received requestLang response");
           console.log(`lang: ${response.lang}`);
           setTimerStatus(response.lang);
@@ -45,6 +48,10 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
       targetTabId,
       { type: "requestLang" },
       (response) => {
+        if (response === chrome.runtime.lastError || !response) {
+          console.log(response);
+          return;
+        }
         console.log("received requestLang response");
         console.log(`lang: ${response.lang}`);
         setTimerStatus(response.lang);
