@@ -30,20 +30,27 @@ async function sendRequestToActiveTabAndSetTimerStatus() {
   }
   const targetTabId = tabs[0].id;
 
-  const response = await chrome.tabs.sendMessage(targetTabId, {
-    type: "requestLang",
-  });
-  if (response === chrome.runtime.lastError || !response) {
-    console.log(response);
-    return;
+  try {
+    const response = await chrome.tabs.sendMessage(targetTabId, {
+      type: "requestLang",
+    });
+    if (!response) {
+      console.log("response is not valid:");
+      console.log(response);
+      setTimerStatus("invalid");
+      return;
+    }
+    console.log("received requestLang response");
+    console.log(`lang: ${response.lang}`);
+    setTimerStatus(response.lang);
+  } catch (error) {
+    console.log("failed to receive response");
+    setTimerStatus("invalid");
   }
-  console.log("received requestLang response");
-  console.log(`lang: ${response.lang}`);
-  setTimerStatus(response.lang);
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type == "pageTransition") {
+  if (request.type === "pageTransition") {
     console.log("received pageTransition message");
     console.log(`lang: ${request.lang}`);
     if (sender.tab.active) {
@@ -57,9 +64,20 @@ function setTimerStatus(lang) {
   chrome.storage.sync.get(["timerStatus"], function (statusResult) {
     const timerStatus = statusResult.timerStatus;
     console.log(`timer status: ${timerStatus}`);
+    if (lang === "en") {
+      chrome.action.setBadgeBackgroundColor({ color: [0, 0, 255, 0] });
+    } else if (lang === "invalid") {
+      chrome.action.setBadgeText({ text: "?" });
+      chrome.action.setBadgeBackgroundColor({ color: "red" });
+    } else {
+      chrome.action.setBadgeBackgroundColor({ color: "gray" });
+      chrome.storage.sync.get(["count"], function (countResult) {
+        const nowCount = countResult.count;
+        chrome.action.setBadgeText({ text: countToTimestampText(nowCount) });
+      });
+    }
     if (lang === "en" && timerStatus === "not set") {
       console.log("start timer");
-      chrome.action.setBadgeBackgroundColor({ color: [0, 0, 255, 0] });
       const intervalId = setInterval(() => {
         chrome.storage.sync.get(["count"], function (countResult) {
           const nowCount = countResult.count;
@@ -72,7 +90,6 @@ function setTimerStatus(lang) {
     }
     if (lang !== "en" && timerStatus !== "not set") {
       console.log("stop timer");
-      chrome.action.setBadgeBackgroundColor({ color: "gray" });
       clearInterval(timerStatus);
       chrome.storage.sync.set({ timerStatus: "not set" });
     }
