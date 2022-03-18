@@ -2,10 +2,47 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log("onInstalled fired");
   chrome.storage.sync.set({
     timing: { hour: 0, minute: 0 },
+    referenceDate: "start date",
     count: 0,
+    countRecord: {},
     timerStatus: "not set",
   });
+
+  const resetCountDate = new Date();
+  resetCountDate.setHours(0, 0, 0, 0);
+  resetCountDate.setDate(resetCountDate.getDate() + 1);
+  console.log(resetCountDate);
+  chrome.alarms.create("resetCountAlarm", {
+    when: resetCountDate.getTime(),
+    periodInMinutes: 60 * 24,
+  });
 });
+
+chrome.alarms.onAlarm.addListener(function (alarm) {
+  resetCountAlarmListener(alarm);
+});
+
+async function resetCountAlarmListener(alarm) {
+  if (alarm.name !== "resetCountAlarm") return;
+  console.log("resetCountAlarm fired");
+  const result = await chrome.storage.sync.get(["count", "countRecord"]);
+  const count = result.count;
+  const countRecord = result.countRecord;
+  const keyDate = await getDateFromEndTime();
+  countRecord[keyDate] = count;
+  chrome.storage.sync.set({ count: 0, countRecord: countRecord });
+  console.log(countRecord);
+}
+
+async function getDateFromEndTime() {
+  const endDate = new Date();
+  const result = await chrome.storage.sync.get(["referenceDate"]);
+  const referenceDate = result.referenceDate;
+  if (referenceDate === "start date") {
+    endDate.setDate(endDate.getDate() - 1);
+  }
+  return `${endDate.getFullYear()}-${endDate.getMonth()}-${endDate.getDate()}`;
+}
 
 chrome.windows.onFocusChanged.addListener((windowId) => {
   console.log("onFocusChanged fired");
@@ -20,6 +57,17 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
 chrome.tabs.onActivated.addListener((activeInfo) => {
   console.log("onActivated fired");
   sendRequestToActiveTabAndSetTimerStatus();
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === "pageTransition") {
+    console.log("received pageTransition message");
+    console.log(`lang: ${request.lang}`);
+    if (sender.tab.active) {
+      setTimerStatus(request.lang);
+    }
+    sendResponse({ message: "bg page received" });
+  }
 });
 
 async function sendRequestToActiveTabAndSetTimerStatus() {
@@ -48,17 +96,6 @@ async function sendRequestToActiveTabAndSetTimerStatus() {
     setTimerStatus("invalid");
   }
 }
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === "pageTransition") {
-    console.log("received pageTransition message");
-    console.log(`lang: ${request.lang}`);
-    if (sender.tab.active) {
-      setTimerStatus(request.lang);
-    }
-    sendResponse({ message: "bg page received" });
-  }
-});
 
 function setTimerStatus(lang) {
   chrome.storage.sync.get(["timerStatus"], function (statusResult) {
