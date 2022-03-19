@@ -4,7 +4,7 @@ chrome.runtime.onInstalled.addListener(() => {
     timing: { hour: 0, minute: 0 },
     referenceDate: "start date",
     count: 0,
-    countRecord: {},
+    countRecord: [],
     timerStatus: "not set",
   });
 
@@ -29,7 +29,9 @@ async function resetCountAlarmListener(alarm) {
   const count = result.count;
   const countRecord = result.countRecord;
   const keyDate = await getDateFromEndTime();
-  countRecord[keyDate] = count;
+  const record = {};
+  record[keyDate] = count;
+  countRecord.push(record);
   chrome.storage.sync.set({ count: 0, countRecord: countRecord });
   console.log(countRecord);
 }
