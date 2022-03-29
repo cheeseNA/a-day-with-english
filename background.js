@@ -1,3 +1,5 @@
+import { getLangResponseFromActiveTab } from "./language-fetcher.js";
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log("onInstalled fired");
   chrome.storage.sync.set({
@@ -75,25 +77,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function asyncWrapperForListeners() {
   const response = await getLangResponseFromActiveTab();
   setTimerStatusFromResponse(response);
-}
-
-async function getLangResponseFromActiveTab() {
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tabs.length !== 1) {
-    console.log("tab.length is not one");
-    return;
-  }
-  const targetTabId = tabs[0].id;
-
-  try {
-    const response = await chrome.tabs.sendMessage(targetTabId, {
-      type: "requestLang",
-    });
-    return response;
-  } catch (error) {
-    console.log("failed to receive response");
-    return "fail";
-  }
 }
 
 async function setTimerStatusFromResponse(response) {
