@@ -52,13 +52,13 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
     console.log("no focus");
     setTimerStatus("no focus");
   } else {
-    sendRequestToActiveTabAndSetTimerStatus();
+    asyncWrapperForListeners();
   }
 });
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
   console.log("onActivated fired");
-  sendRequestToActiveTabAndSetTimerStatus();
+  asyncWrapperForListeners();
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -72,7 +72,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-async function sendRequestToActiveTabAndSetTimerStatus() {
+async function asyncWrapperForListeners() {
+  const response = await getLangResponseFromActiveTab();
+  setTimerStatusFromResponse(response);
+}
+
+async function getLangResponseFromActiveTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tabs.length !== 1) {
     console.log("tab.length is not one");
@@ -84,19 +89,23 @@ async function sendRequestToActiveTabAndSetTimerStatus() {
     const response = await chrome.tabs.sendMessage(targetTabId, {
       type: "requestLang",
     });
-    if (!response) {
-      console.log("response is not valid:");
-      console.log(response);
-      setTimerStatus("invalid");
-      return;
-    }
-    console.log("received requestLang response");
-    console.log(`lang: ${response.lang}`);
-    setTimerStatus(response.lang);
+    return response;
   } catch (error) {
     console.log("failed to receive response");
-    setTimerStatus("invalid");
+    return "fail";
   }
+}
+
+async function setTimerStatusFromResponse(response) {
+  if (response === "fail" || !response) {
+    console.log("response is not valid:");
+    console.log(response);
+    setTimerStatus("invalid");
+    return;
+  }
+  console.log("received requestLang response");
+  console.log(`lang: ${response.lang}`);
+  setTimerStatus(response.lang);
 }
 
 async function setTimerStatus(lang) {
