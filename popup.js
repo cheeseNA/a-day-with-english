@@ -14,7 +14,27 @@ async function asyncWrapperForPopupEvent() {
   if (response === "fail" || !response) {
     textSpanElement.textContent =
       "The extension cannot fetch the language of this page";
+    domainButton.disabled = true;
+    urlButton.disabled = true;
   } else {
     textSpanElement.textContent = `This page is written in '${response.lang}'`;
+    if (response.lang === "en") {
+      domainButton.value = "Mark this domain as non English site";
+      urlButton.value = "Mark this url as non English site";
+    } else {
+      domainButton.value = "Mark this domain as English site";
+      urlButton.value = "Mark this url as English site";
+    }
+
+    domainButton.addEventListener("click", () => {
+      const domain = window.location.hostname;
+      registerToRuleList(domain, response.lang !== "en", false);
+    });
+    urlButton.addEventListener("click", () => {
+      const url = window.location.href;
+      registerToRuleList(url, response.lang !== "en", true);
+    });
   }
 }
+
+async function registerToRuleList(string, asEnglish, isUrl) {}
