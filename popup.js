@@ -37,4 +37,11 @@ async function asyncWrapperForPopupEvent() {
   }
 }
 
-async function registerToRuleList(string, asEnglish, isUrl) {}
+async function registerToRuleList(string, asEnglish, isUrl) {
+  const result = await chrome.storage.sync.get(["rules"]);
+  const targetList =
+    result.rules[asEnglish ? "en" : "noen"][isUrl ? "url" : "domain"];
+  targetList.push(string);
+  console.log(result);
+  await chrome.storage.sync.set({ rules: result.rules });
+}

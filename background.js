@@ -8,6 +8,7 @@ chrome.runtime.onInstalled.addListener(() => {
     count: 0,
     countRecord: [],
     timerStatus: "not set",
+    rules: { en: { domain: [], url: [] }, noen: { domain: [], url: [] } },
   });
 
   const resetCountDate = new Date();
