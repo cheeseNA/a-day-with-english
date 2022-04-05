@@ -26,12 +26,21 @@ async function asyncWrapperForPopupEvent() {
       urlButton.value = "Mark this url as English site";
     }
 
-    domainButton.addEventListener("click", () => {
-      const domain = window.location.hostname;
+    domainButton.addEventListener("click", async () => {
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      const url = new URL(tab.url);
+      const domain = url.hostname;
       registerToRuleList(domain, response.lang !== "en", false);
     });
-    urlButton.addEventListener("click", () => {
-      const url = window.location.href;
+    urlButton.addEventListener("click", async () => {
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      const url = tab.url;
       registerToRuleList(url, response.lang !== "en", true);
     });
   }
